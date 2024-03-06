@@ -1,6 +1,9 @@
 # x-ui Cracker
 x-ui Cracker is a tool for cracking x-ui panels using a list of URLs, usernames, and passwords. It can be used to automate the process of testing multiple combinations of credentials against multiple URLs.
 
+## Gitbook
+https://void-security-team.gitbook.io/void-security-team/
+
 ## Features
 - Crack x-ui panels using a list of URLs, usernames, and passwords.
 - Supports reading credentials from files.
