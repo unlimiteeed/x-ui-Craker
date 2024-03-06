@@ -14,7 +14,6 @@ To run the script with default settings:
 
 ```
 python x-ui.py -lf urls.txt
-
 ```
 This will use default credentials (admin as username and admin as password) and test them against the URLs listed in urls.txt.
 
@@ -23,7 +22,6 @@ To specify custom usernames and passwords files:
 
 ```
 python x-ui.py -lf urls.txt -uf usernames.txt -pf passwords.txt
-
 ```
 This will use the usernames and passwords listed in usernames.txt and passwords.txt respectively.
 
